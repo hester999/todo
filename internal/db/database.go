@@ -14,10 +14,12 @@ type Database interface {
 }
 
 type PostgresDatabase struct {
+	// TODO Заменить на sqlx
 	db *sql.DB
 }
 
 func (p *PostgresDatabase) Connection() error {
+	// TODO Не должно лежать в открытом виде
 	db, err := sql.Open("postgres", "postgres://admin:123@localhost:5432/postgres?sslmode=disable")
 	if err != nil {
 		return fmt.Errorf("could not connect to postgres database: %w", err)

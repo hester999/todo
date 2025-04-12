@@ -2,18 +2,28 @@ package handler
 
 import (
 	"encoding/json"
+	sdkError "errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"todo/internal/entity"
 	"todo/internal/errors"
-	"todo/internal/usecases"
 )
 
-type TaskHandler struct {
-	service usecases.TaskService
+type TaskService interface {
+	CreateTask(title, description string) (entity.Task, error)
+	GetAllTasks() ([]entity.Task, error)
+	GetTaskById(taskId string) (entity.Task, error)
+	DeleteTaskById(taskId string) error
+	DeleteAllTasks() error
+	UpdateTask(id string, task entity.Task) (entity.Task, error)
 }
 
-func NewTaskHandler(service usecases.TaskService) *TaskHandler {
+type TaskHandler struct {
+	service TaskService
+}
+
+func NewTaskHandler(service TaskService) *TaskHandler {
 	return &TaskHandler{service: service}
 }
 
@@ -22,10 +32,14 @@ func (h *TaskHandler) Hello(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
+	// TODO Ты и так этот метод используешь только на POST
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	// Не должно так быть. Давай делать кодогенерацию и описовать контракты
+	// TODO https://github.com/oapi-codegen/oapi-codegen
 	var input struct {
 		Title       string `json:"title"`
 		Description string `json:"description"`
@@ -38,6 +52,7 @@ func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	respTask, err := h.service.CreateTask(input.Title, input.Description)
 	if err != nil {
+		// TODO изучить врапинг и использовать errors.Is errors.As
 		if appErr, ok := err.(*errors.AppError); ok {
 			http.Error(w, appErr.Message, appErr.Code)
 		} else {
@@ -63,11 +78,12 @@ func (h *TaskHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	task, err := h.service.GetTaskById(id)
 	if err != nil {
-		if appErr, ok := err.(*errors.AppError); ok {
-			http.Error(w, appErr.Message, appErr.Code)
-		} else {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		if sdkError.Is(err, errors.NotFoundError) {
+			http.Error(w, "entity wasn't found", http.StatusNotFound)
 		}
+
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+
 		return
 	}
 	w.WriteHeader(http.StatusOK)

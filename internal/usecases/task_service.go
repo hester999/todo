@@ -1,33 +1,32 @@
 package usecases
 
 import (
+	"fmt"
 	"strings"
 	"time"
 	"todo/internal/entity"
 	"todo/internal/errors"
-	"todo/internal/repo"
 	"todo/internal/utils"
 )
 
-type TaskService interface {
-	CreateTask(title, description string) (entity.Task, error)
-	GetAllTasks() ([]entity.Task, error)
-	GetTaskById(taskId string) (entity.Task, error)
-	DeleteTaskById(taskId string) error
-	DeleteAllTasks() error
-	UpdateTask(id string, task entity.Task) (entity.Task, error)
+type TaskRepository interface {
+	Save(task entity.Task) (entity.Task, error)
+	FindAll() ([]entity.Task, error)
+	FindById(id string) (entity.Task, error)
+	DeleteById(id string) error
+	DeleteAll() error
+	Edit(id string, task entity.Task) (entity.Task, error)
 }
 
 type TaskServiceImpl struct {
-	repo repo.TaskRepository
+	repo TaskRepository
 }
 
-func NewTaskServiceImpl(repo repo.TaskRepository) *TaskServiceImpl {
+func NewTaskServiceImpl(repo TaskRepository) *TaskServiceImpl {
 	return &TaskServiceImpl{repo: repo}
 }
 
 func (t *TaskServiceImpl) CreateTask(title, description string) (entity.Task, error) {
-
 	id, err := utils.GenerateUUID()
 	if err != nil {
 		return entity.Task{}, errors.NewInternal("failed to generate UUID", err)
@@ -67,10 +66,7 @@ func (t *TaskServiceImpl) GetTaskById(taskId string) (entity.Task, error) {
 	}
 	task, err := t.repo.FindById(taskId)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return entity.Task{}, errors.NewNotFound("task not found", err)
-		}
-		return entity.Task{}, errors.NewInternal("failed to get task", err)
+		return entity.Task{}, fmt.Errorf("failed to get task by id: %w", err)
 	}
 	return task, nil
 }

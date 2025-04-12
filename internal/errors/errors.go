@@ -1,11 +1,13 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 )
 
 type AppError struct {
+	// TODO Нах тебе тут код и Message. Есть для такого врапинг ошибок
 	Code    int
 	Message string
 	Err     error
@@ -38,3 +40,5 @@ func NewNotFound(message string, cause error) *AppError {
 	}
 	return &AppError{Code: http.StatusNotFound, Message: message, Err: cause}
 }
+
+var NotFoundError = errors.New("entity not found")
