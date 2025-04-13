@@ -4,16 +4,8 @@ import (
 	"fmt"
 	"todo/internal/db"
 	"todo/internal/entity"
+	"todo/internal/errors"
 )
-
-type TaskRepository interface {
-	Save(task entity.Task) (entity.Task, error)
-	FindAll() ([]entity.Task, error)
-	FindById(id string) (entity.Task, error)
-	DeleteById(id string) error
-	DeleteAll() error
-	Edit(id string, task entity.Task) (entity.Task, error)
-}
 
 type TaskRepositoryImpl struct {
 	db db.Database
@@ -51,6 +43,18 @@ func (t *TaskRepositoryImpl) Save(task entity.Task) (entity.Task, error) {
 
 func (t *TaskRepositoryImpl) FindAll() ([]entity.Task, error) {
 	query := "SELECT id, title, description, status, create_time FROM tasks"
+	// TODO sqlx есть SelectContext
+
+	//var res []struct {
+	//	ID    int    `db:"id"`
+	//	Title string `db:"id"`
+	//}
+	//
+	//t.db.SelectContext(ctx, &res)
+	// resultEntity := make([]entity.Task, 0, len(res))
+	// for , _ := res {
+	// resultEntity = resultEntity.append(entity.Task{res.ID})
+
 	rows, err := t.db.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch tasks: %w", err)
@@ -85,7 +89,7 @@ func (t *TaskRepositoryImpl) FindById(id string) (entity.Task, error) {
 		}
 		return task, nil
 	}
-	return entity.Task{}, fmt.Errorf("task with id %s not found", id)
+	return entity.Task{}, errors.NotFoundError
 }
 
 func (t *TaskRepositoryImpl) DeleteById(id string) error {
