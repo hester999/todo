@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"github.com/jmoiron/sqlx"
 	"time"
 	"todo/internal/apperr"
 	"todo/internal/db"
@@ -8,14 +9,16 @@ import (
 )
 
 type TaskRepositoryImpl struct {
-	db db.Database
+	cursor *sqlx.DB
 }
 
-func NewTaskRepositoryImpl(db db.Database) *TaskRepositoryImpl {
-	if db == nil {
-		panic("db cannot be nil")
+func NewTaskRepositoryImpl() *TaskRepositoryImpl {
+	cur, err := db.Connection()
+	if err != nil {
+		panic(err)
 	}
-	return &TaskRepositoryImpl{db: db}
+
+	return &TaskRepositoryImpl{cursor: cur}
 }
 
 func (t *TaskRepositoryImpl) Save(task entity.Task) (entity.Task, error) {
@@ -29,7 +32,7 @@ func (t *TaskRepositoryImpl) Save(task entity.Task) (entity.Task, error) {
 		CreateTime  time.Time `db:"create_time"`
 	}(task)
 
-	err := t.db.QueryRow(queryString, &savedTask, savedTask.Id, savedTask.Title, savedTask.Description, savedTask.Status, savedTask.CreateTime)
+	err := t.cursor.Get(&savedTask, queryString, task.Id, task.Title, task.Description, task.Status, task.CreateTime)
 
 	if err != nil {
 
@@ -51,7 +54,7 @@ func (t *TaskRepositoryImpl) FindAll() ([]entity.Task, error) {
 		CreateTime  time.Time `db:"create_time"`
 	}
 
-	err := t.db.Query(query, &res)
+	err := t.cursor.Select(&res, query)
 
 	if err != nil {
 		return nil, apperr.DatabaseError
@@ -75,7 +78,7 @@ func (t *TaskRepositoryImpl) FindById(id string) (entity.Task, error) {
 		CreateTime  time.Time `db:"create_time"`
 	}
 
-	err := t.db.QueryRow(query, &res, id)
+	err := t.cursor.Get(&res, query, id)
 
 	if err != nil {
 		return entity.Task{}, apperr.NotFoundError
@@ -86,7 +89,7 @@ func (t *TaskRepositoryImpl) FindById(id string) (entity.Task, error) {
 
 func (t *TaskRepositoryImpl) DeleteById(id string) error {
 	queryString := "DELETE FROM tasks WHERE id = $1"
-	err := t.db.Exec(queryString, id)
+	_, err := t.cursor.Exec(queryString, id)
 	if err != nil {
 		return apperr.DatabaseError
 	}
@@ -95,7 +98,7 @@ func (t *TaskRepositoryImpl) DeleteById(id string) error {
 
 func (t *TaskRepositoryImpl) DeleteAll() error {
 	queryString := "DELETE FROM tasks"
-	err := t.db.Exec(queryString)
+	_, err := t.cursor.Exec(queryString)
 	if err != nil {
 		return apperr.DatabaseError
 	}
@@ -113,7 +116,7 @@ func (t *TaskRepositoryImpl) Edit(id string, task entity.Task) (entity.Task, err
 		CreateTime  time.Time `db:"create_time"`
 	}{}
 
-	err := t.db.QueryRow(queryString, &updateTask, task.Title, task.Description, task.Status, task.CreateTime, id)
+	err := t.cursor.Get(&updateTask, queryString, task.Title, task.Description, task.Status, task.CreateTime, id)
 	if err != nil {
 		return entity.Task{}, apperr.DatabaseError
 	}

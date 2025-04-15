@@ -205,10 +205,10 @@ func validateTitle(title string, maxLen int) error {
 		maxLen = 100
 	}
 	if len(title) == 0 {
-		return apperr.TitleBadRequestError
+		return errors.New("bad title")
 	}
 	if len(title) > maxLen {
-		return apperr.TitleTooLongError
+		return errors.New("bad title")
 	}
 	return nil
 }
@@ -219,11 +219,11 @@ func validateDescription(description string, maxLen int) error {
 	}
 
 	if len(description) == 0 {
-		return apperr.DescriptionBadRequestError
+		return errors.New("bad description")
 	}
 
 	if len(description) > maxLen {
-		return apperr.DescriptionTooLongError
+		return errors.New("bad description")
 
 	}
 	return nil
