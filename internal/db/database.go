@@ -1,8 +1,8 @@
 package db
 
 import (
-	"database/sql"
 	"fmt"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
@@ -10,17 +10,18 @@ type Database interface {
 	Connection() error
 	Close() error
 	Exec(query string, args ...interface{}) error
-	Query(query string, args ...interface{}) (*sql.Rows, error)
+	Query(query string, dest interface{}, args ...interface{}) error
+	QueryRow(query string, dest interface{}, args ...interface{}) error
 }
 
 type PostgresDatabase struct {
 	// TODO Заменить на sqlx
-	db *sql.DB
+	db *sqlx.DB
 }
 
 func (p *PostgresDatabase) Connection() error {
 	// TODO Не должно лежать в открытом виде
-	db, err := sql.Open("postgres", "postgres://admin:123@localhost:5432/postgres?sslmode=disable")
+	db, err := sqlx.Open("postgres", "postgres://admin:123@localhost:5432/postgres?sslmode=disable")
 	if err != nil {
 		return fmt.Errorf("could not connect to postgres database: %w", err)
 	}
@@ -41,10 +42,18 @@ func (p *PostgresDatabase) Exec(query string, args ...interface{}) error {
 	return nil
 }
 
-func (p *PostgresDatabase) Query(query string, args ...interface{}) (*sql.Rows, error) {
-	res, err := p.db.Query(query, args...)
+func (p *PostgresDatabase) Query(query string, dest interface{}, args ...interface{}) error {
+	err := p.db.Select(dest, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("could not execute query: %w", err)
+		return fmt.Errorf("could not execute query: %w", err)
 	}
-	return res, err
+	return err
+}
+
+func (p *PostgresDatabase) QueryRow(query string, dest interface{}, args ...interface{}) error {
+	err := p.db.Get(dest, query, args...)
+	if err != nil {
+		return fmt.Errorf("could not execute query: %w", err)
+	}
+	return nil
 }

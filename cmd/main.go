@@ -30,7 +30,7 @@ func main() {
 	router.HandleFunc("/tasks/{id}", handlerService.GetTask).Methods(http.MethodGet)
 	router.HandleFunc("/tasks/{id}", handlerService.UpdateTask).Methods(http.MethodPatch)
 	router.HandleFunc("/tasks/{id}", handlerService.DeleteTask).Methods(http.MethodDelete)
-	router.HandleFunc("/hello", handlerService.Hello).Methods(http.MethodPost)
+	router.HandleFunc("/hello", handlerService.Hello).Methods(http.MethodGet)
 
 	err := http.ListenAndServe(":8080", router)
 	if err != nil {

@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"errors"
 	"github.com/google/uuid"
+	"todo/internal/apperr"
 )
 
 func ValidateTitle(title string, maxLen int) error {
@@ -10,10 +10,10 @@ func ValidateTitle(title string, maxLen int) error {
 		maxLen = 100
 	}
 	if len(title) == 0 {
-		return errors.New("invalid title")
+		return apperr.TitleBadRequestError
 	}
 	if len(title) > maxLen {
-		return errors.New("title too long")
+		return apperr.TitleTooLongError
 	}
 	return nil
 }
@@ -24,11 +24,11 @@ func ValidateDescription(description string, maxLen int) error {
 	}
 
 	if len(description) == 0 {
-		return errors.New("invalid description")
+		return apperr.DescriptionBadRequestError
 	}
 
 	if len(description) > maxLen {
-		return errors.New("description too long")
+		return apperr.DescriptionTooLongError
 
 	}
 	return nil
@@ -38,7 +38,7 @@ func UUIDValidator(id string) error {
 	_, err := uuid.Parse(id)
 
 	if err != nil {
-		return errors.New("invalid uuid")
+		return apperr.BadUUIDError
 	}
 	return nil
 }
