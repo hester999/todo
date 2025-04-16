@@ -3,6 +3,7 @@ package usecases
 import (
 	"fmt"
 	"time"
+	"todo/internal/apperr"
 	"todo/internal/entity"
 	"todo/internal/utils"
 )
@@ -34,7 +35,7 @@ func (t *TaskServiceImpl) CreateTask(title, description string) (entity.Task, er
 		Id:          id,
 		Title:       title,
 		Description: description,
-		Status:      "in progress",
+		Status:      entity.InProgress,
 		CreateTime:  time.Now(),
 	}
 	savedTask, err := t.repo.Save(task)
@@ -50,6 +51,9 @@ func (t *TaskServiceImpl) GetAllTasks() ([]entity.Task, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error getting all tasks: %w", err)
 	}
+	if len(tasks) == 0 {
+		return []entity.Task{}, apperr.NotFoundError
+	}
 	return tasks, nil
 }
 
@@ -59,7 +63,7 @@ func (t *TaskServiceImpl) GetTaskById(taskId string) (entity.Task, error) {
 	}
 	task, err := t.repo.FindById(taskId)
 	if err != nil {
-		return entity.Task{}, fmt.Errorf("failed to get task by id: %w", err)
+		return entity.Task{}, apperr.NotFoundError
 	}
 	return task, nil
 }
@@ -67,7 +71,7 @@ func (t *TaskServiceImpl) GetTaskById(taskId string) (entity.Task, error) {
 func (t *TaskServiceImpl) DeleteTaskById(taskId string) error {
 	_, err := t.repo.FindById(taskId)
 	if err != nil {
-		return fmt.Errorf("error getting task by id: %w", err)
+		return apperr.NotFoundError
 	}
 
 	if err := t.repo.DeleteById(taskId); err != nil {
@@ -91,7 +95,7 @@ func (t *TaskServiceImpl) UpdateTask(id string, task entity.Task) (entity.Task, 
 	task.Id = id
 	_, err := t.repo.FindById(id)
 	if err != nil {
-		return entity.Task{}, fmt.Errorf("error getting task by id: %w", err)
+		return entity.Task{}, apperr.NotFoundError
 	}
 
 	updatedTask, err := t.repo.Edit(id, task)

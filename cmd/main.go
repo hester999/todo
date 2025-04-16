@@ -4,19 +4,18 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 	"todo/internal/db"
+
 	"todo/internal/handler"
 	"todo/internal/repo"
 	"todo/internal/usecases"
 )
 
 func main() {
-
-	newDataBase := db.PostgresDatabase{}
-
-	if err := newDataBase.Connection(); err != nil {
+	database, err := db.Connection()
+	if err != nil {
 		panic(err)
 	}
-	repository := repo.NewTaskRepositoryImpl(&newDataBase)
+	repository := repo.NewTaskRepositoryImpl(database)
 	service := usecases.NewTaskServiceImpl(repository)
 	handlerService := handler.NewTaskHandler(service)
 
@@ -32,7 +31,7 @@ func main() {
 	router.HandleFunc("/tasks/{id}", handlerService.DeleteTask).Methods(http.MethodDelete)
 	router.HandleFunc("/hello", handlerService.Hello).Methods(http.MethodGet)
 
-	err := http.ListenAndServe(":8080", router)
+	err = http.ListenAndServe(":8080", router)
 	if err != nil {
 		return
 	}
