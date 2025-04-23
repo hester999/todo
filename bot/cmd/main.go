@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	bot, err := tg.NewBotAPI("7999162539:AAGW9pvXKUUxAAEj-ykE5YCaFgRpslbgJik")
+	bot, err := tg.NewBotAPI("токен")
 	if err != nil {
 		log.Panic(err)
 	}
